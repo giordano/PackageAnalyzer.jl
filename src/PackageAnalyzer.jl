@@ -16,6 +16,8 @@ using JuliaSyntax
 using JuliaSyntax: @K_str
 using Legolas
 using Legolas: @schema, @version
+using OrderedCollections
+using PrecompileTools
 
 # We wrap `registry_info` for thread-safety, so we don't want to pull into the namespace here
 using RegistryInstances: RegistryInstances, reachable_registries, PkgEntry
@@ -24,6 +26,7 @@ using RegistryInstances: RegistryInstances, reachable_registries, PkgEntry
 export find_package, find_packages, find_packages_in_manifest
 # Ways to analyze them
 export analyze, analyze_manifest, analyze_packages, LineCategories
+export PackageCollection
 
 ##
 # Borrowed from
@@ -163,6 +166,10 @@ function PackageV1(name, uuid, repo;
 end
 
 function Base.show(io::IO, p::PackageV1)
+    compact = get(io, :compact, false)::Bool
+    if compact
+        return print(io, PackageV1, "(\"", p.name, "\", …)")
+    end
     body = """
         PackageV1 $(p.name):
           * repo: $(p.repo)
@@ -355,6 +362,8 @@ function Base.show(io::IO, d::Trunk)
     print(io, ")")
 end
 
+include("package_collection.jl")
+
 # Provides methods to obtain a `PkgSource`
 include("find_packages.jl")
 
@@ -380,5 +389,10 @@ include("count_loc.jl")
 
 include("deprecated_schemas.jl")
 
+@compile_workload begin
+    p = analyze(PackageAnalyzer)
+    sprint(show, MIME"text/plain"(), p)
+    nothing
+end
 
 end # module

@@ -1,9 +1,9 @@
 """
-    analyze_packages(pkg_entries; auth::GitHub.Authorization=github_auth(), sleep=0, root=mktempdir()) -> Vector{PackageV1}
+    analyze_packages(pkg_entries; auth::GitHub.Authorization=github_auth(), sleep=0, root=mktempdir()) -> PackageCollection
 
 
 Analyze all packages in the iterable `pkg_entries`, using threads, storing their code in `root`
-if it needs to be downloaded.  Returns a `Vector{PackageV1}`.
+if it needs to be downloaded.  Returns a [`PackageCollection`](@ref), which can be used like a `Vector{PackageV1}`.
 
 Each element of `pkg_entries` should be a valid input to [`analyze`](@ref).
 
@@ -24,5 +24,5 @@ function analyze_packages(pkg_entries; auth::GitHub.Authorization=github_auth(),
         put!(outputs, (i, analyze(pkg; auth, sleep, root)))
     end
     close(outputs)
-    return last.(sort!(collect(outputs); by=first))
+    return PackageCollection(last.(sort!(collect(outputs); by=first)))
 end
